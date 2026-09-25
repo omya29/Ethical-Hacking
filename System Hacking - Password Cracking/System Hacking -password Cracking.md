@@ -1,111 +1,236 @@
 # Password Cracking, Remote Login & Wordlist Generation
 
-Password cracking is the process of recovering passwords from data that has been stored in or transmitted by a computer system. In ethical hacking, this is often done through "brute-force" or "dictionary" attacks. Remote login protocols like Telnet and SSH are common entry points for these attacks if weak credentials are used. Tools like Crunch and Hydra automate the generation of wordlists and the credential testing process.
+Password cracking is the process of recovering passwords from data that has been stored in or transmitted by a computer system.
 
-## Requirements:
-*   Kali Linux virtual machine (Attacker)
-*   Metasploitable2 virtual machine (Target)
-*   Both machines configured on the same virtual network (e.g., NAT or Host-Only)
+This practical covers remote login, wordlist generation, and credential testing in the lab.
 
-## Objectives:
-*   Establish remote sessions using Telnet and SSH.
-*   Troubleshoot legacy SSH key negotiation errors.
-*   Understand the purpose of wordlist generators.
-*   Generate custom dictionaries using Crunch.
-*   Automate password cracking against multiple protocols using Hydra.
+## 🧪 Requirements
 
-## Remote Access Basics
+- Kali Linux virtual machine — Attacker
+- Metasploitable 2 virtual machine — Target
+- Both machines configured on the same virtual network (for example, NAT or Host-Only)
 
-### 1. Remote Access via Telnet
-Telnet is an older, unencrypted protocol used for remote command-line access. The Metasploitable2 target uses default credentials (`msfadmin:msfadmin`).
+## 🎯 Objectives
+
+- Establish remote sessions using Telnet and SSH.
+- Troubleshoot legacy SSH key negotiation errors.
+- Understand the purpose of wordlist generators.
+- Generate custom dictionaries using Crunch.
+- Automate password testing against multiple protocols using Hydra.
+
+---
+
+# Remote Access Basics
+
+## 1. Remote Access via Telnet
+
+Telnet is an older, unencrypted protocol used for remote command-line access.
+
+The Metasploitable 2 target uses the default credentials `msfadmin:msfadmin`.
 
 **Command:**
+
 ```bash
 telnet 192.168.37.130
-Purpose:
-Establishes a remote terminal session. Output showed a successful login after entering the correct username and password.
+```
 
-2. Remote Access via SSH (Troubleshooting Legacy Algorithms)
-SSH (Secure Shell) is a cryptographic network protocol for operating network services securely over an unsecured network. An initial SSH connection attempt failed because modern Kali Linux deprecates older RSA key algorithms used by the outdated Metasploitable2 server.
+**Purpose:**  
+Establishes a remote terminal session.
 
-Failed Attempt:
+The practical showed a successful login after entering the correct username and password.
 
-bash
+---
+
+## 2. Remote Access via SSH
+
+SSH (Secure Shell) is a cryptographic network protocol for operating network services securely over an unsecured network.
+
+### Failed Attempt
+
+```bash
 ssh 192.168.37.130 -l msfadmin
-# Error: Unable to negotiate with 192.168.37.130 port 22: no matching host key type found. Their offer: ssh-rsa,ssh-dss
-Successful Attempt (Workaround):
+```
 
-bash
+**Error:**
+
+```text
+Unable to negotiate with 192.168.37.130 port 22:
+no matching host key type found.
+Their offer: ssh-rsa,ssh-dss
+```
+
+### Successful Attempt — Lab Workaround
+
+```bash
 ssh -o HostKeyAlgorithms=+ssh-rsa msfadmin@192.168.37.130
-Purpose:
-Bypasses the key negotiation error by explicitly allowing the legacy ssh-rsa algorithm. Successfully logged in remotely after accepting the fingerprint.
+```
 
-Wordlist Generation with Crunch
-Crunch is a wordlist generator where you can specify standard character sets or a completely custom character set. It is an essential tool for creating targeted dictionaries for password cracking.
+**Purpose:**  
+Explicitly allows the legacy `ssh-rsa` algorithm required by the outdated Metasploitable 2 SSH server.
 
-4. Basic Alphabetic Generation
-Command:
+---
 
-bash
+# Wordlist Generation with Crunch
+
+Crunch is a wordlist generator where you can specify standard character sets or a completely custom character set.
+
+## 3. Basic Alphabetic Generation
+
+**Command:**
+
+```bash
 crunch 1 2
-Purpose:
+```
+
+**Purpose:**  
 Generates all combinations from length 1 to 2 using the default lowercase alphabet.
 
-5. Numeric Generation
-Command:
+---
 
-bash
+## 4. Numeric Generation
+
+**Command:**
+
+```bash
 crunch 1 2 0123456789
-Purpose:
-Generates all combinations from length 1 to 2 using only numbers (0-9).
+```
 
-6. Numeric with Symbols
-Command:
+**Purpose:**  
+Generates all combinations from length 1 to 2 using only numbers (0–9).
 
-bash
+---
+
+## 5. Numeric with Symbols
+
+**Command:**
+
+```bash
 crunch 2 4 ab12#$
-Purpose:
-Generates combinations of length 2 to 4 using the specified custom character set (a, b, 1, 2, #, $).
+```
 
-7. Permutation Generation
-Command:
+**Purpose:**  
+Generates combinations of length 2 to 4 using the specified custom character set: `a, b, 1, 2, #, $`.
 
-bash
+---
+
+## 6. Permutation Generation
+
+**Command:**
+
+```bash
 crunch 4 4 -p abcd
-Purpose:
-The -p flag treats the input as a set of characters to permutate. It generated all unique permutations of a, b, c, d (e.g., abcd, abdc, acbd, etc.).
+```
 
-8. Saving Output to a File
-Command:
+**Purpose:**  
+The `-p` flag treats the input as a set of characters to permutate.
 
-bash
+It generates unique permutations such as:
+
+```text
+abcd
+abdc
+acbd
+...
+```
+
+---
+
+## 7. Saving Output to a File
+
+**Command:**
+
+```bash
 crunch 4 4 abcd > pass.txt
-Purpose:
-Generates all combinations and redirects the output to a file named pass.txt instead of displaying it on the screen.
+```
 
-Password Cracking with Hydra
-Hydra is a fast and flexible online password cracking tool. It performs rapid dictionary attacks against various network protocols. Using the wordlist generated by Crunch (pass.txt), Hydra can automate credential testing.
+**Purpose:**  
+Generates the combinations and redirects the output to `pass.txt` instead of displaying it on the screen.
 
-9. Hydra Command 1: SSH Brute-Force
-Command:
+---
 
-bash
+# Password Cracking with Hydra
+
+Hydra is a fast and flexible online password-cracking tool. It performs dictionary attacks against various network protocols.
+
+The wordlist generated with Crunch (`pass.txt`) is used for credential testing.
+
+## 8. Hydra — SSH
+
+**Command:**
+
+```bash
 hydra -l msfadmin -P pass.txt ssh://192.168.37.130
-Purpose:
-Attempts to crack the SSH password for the user msfadmin. The -l flag specifies a single login name, -P specifies the wordlist file, and ssh:// targets the SSH service.
+```
 
-10. Hydra Command 2: FTP Brute-Force
-Command:
+**Purpose:**  
+Attempts to test passwords for the `msfadmin` account against the SSH service.
 
-bash
+- `-l` — specifies a single login name
+- `-P` — specifies the password list
+- `ssh://` — targets the SSH service
+
+---
+
+## 9. Hydra — FTP
+
+**Command:**
+
+```bash
 hydra -l msfadmin -P pass.txt ftp://192.168.37.130
-Purpose:
-Targets the FTP service running on port 21. This tests the VSFTPD service discovered during the Nmap reconnaissance phase.
+```
 
-11. Hydra Command 3: Telnet Brute-Force
-Command:
+**Purpose:**  
+Targets the FTP service running on port 21.
 
-bash
+---
+
+## 10. Hydra — Telnet
+
+**Command:**
+
+```bash
 hydra -l msfadmin -P pass.txt telnet://192.168.37.130
-Purpose:
-Targets the Telnet service on port 23. Because Telnet is unencrypted, it is often a prime target for brute-force attacks.
+```
+
+**Purpose:**  
+Targets the Telnet service on port 23.
+
+---
+
+# Practical Flow
+
+```text
+Remote Access
+     │
+     ├── Telnet
+     └── SSH
+          │
+          ▼
+   Wordlist Generation
+          │
+          └── Crunch
+                │
+                ▼
+          pass.txt
+                │
+                ▼
+          Credential Testing
+                │
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+      SSH      FTP     Telnet
+       │        │        │
+       └────────┴────────┘
+               Hydra
+```
+
+---
+
+# Key Takeaways
+
+- Telnet provides remote command-line access but is an older, unencrypted protocol.
+- SSH provides secure remote access, but the old Metasploitable 2 server requires a legacy algorithm workaround.
+- Crunch can generate custom wordlists.
+- The `-p` option can be used for permutation generation.
+- `>` redirects generated output to a file.
+- Hydra can perform credential testing against SSH, FTP, and Telnet.
