@@ -1,19 +1,25 @@
 # Host Discovery & Port Scanning using Nmap
 
-Nmap (Network Mapper) is a free and open-source utility for network discovery and security auditing. Host discovery is the process of determining whether a host is alive/reachable on a network before performing further scanning. Port scanning is the subsequent process used to identify the state of TCP/UDP ports on a target (Open, Closed, or Filtered).
+Nmap (Network Mapper) is a free and open-source utility for network discovery and security auditing.
 
-## Requirements:
-*   Kali Linux virtual machine (Attacker/Testing machine)
-*   Metasploitable 2 virtual machine (Vulnerable target machine)
-*   Both machines configured on the same isolated virtual network (e.g., NAT or Host-Only)
+This practical focuses on **host discovery** and **port scanning** using Nmap in a controlled lab environment.
 
-## Objectives:
-*   Identify network interface information.
-*   Understand the difference between Host Discovery and Port Scanning.
-*   Identify active hosts using ICMP Echo, Timestamp, and Address Mask requests.
-*   Identify active hosts using TCP SYN, TCP ACK, and UDP sweeps.
-*   Understand TCP Connect, TCP SYN (Stealth), and FTP Bounce scanning techniques.
-*   Analyze packet traces and reasons for host states.
+## 🧪 Requirements
+
+- Kali Linux virtual machine — Attacker/Testing machine
+- Metasploitable 2 virtual machine — Vulnerable target machine
+- Both machines configured on the same isolated virtual network (for example, NAT or Host-Only)
+
+## 🎯 Objectives
+
+- Identify network interface information.
+- Understand the difference between Host Discovery and Port Scanning.
+- Identify active hosts using ICMP Echo, Timestamp, and Address Mask requests.
+- Identify active hosts using TCP SYN, TCP ACK, and UDP sweeps.
+- Understand TCP Connect, TCP SYN (Stealth), and FTP Bounce scanning techniques.
+- Analyze packet traces and reasons for host states.
+
+---
 
 ## Nmap Basics
 
@@ -22,149 +28,223 @@ Nmap is installed by default in Kali Linux. Before performing network scanning, 
 ### 1. Network Interface Information
 
 **Command:**
+
 ```bash
 ifconfig
-Purpose:
-Displays network interface information such as IP address, MAC address, netmask, and network interface status. Important terms include eth0 (Ethernet interface), inet (IPv4 address), and lo (Loopback interface).
+```
 
-Host Discovery
+**Purpose:**  
+Displays network interface information such as IP address, MAC address, netmask, and network interface status.
+
+Important terms include:
+
+- `eth0` — Ethernet interface
+- `inet` — IPv4 address
+- `lo` — Loopback interface
+
+---
+
+# Host Discovery
+
 Host discovery is used to determine whether a host is alive/reachable on a network before performing further scanning.
 
-2. ICMP Echo Host Discovery
-Command:
+## 2. ICMP Echo Host Discovery
 
-bash
+**Command:**
+
+```bash
 nmap -PE <TARGET-IP>
-Purpose:
+```
+
+**Purpose:**  
 Uses ICMP Echo Request for host discovery to check whether the target responds.
 
-Command:
+### Host Discovery Without Port Scanning
 
-bash
+```bash
 nmap -PE -sn <TARGET-IP>
-Purpose:
--sn performs host discovery without performing a port scan. Used to determine whether a target host is alive without scanning its ports.
+```
 
-Command:
+**Purpose:**  
+`-sn` performs host discovery without performing a port scan.
 
-bash
+### Show the Reason for the Host State
+
+```bash
 nmap -PE -sn <TARGET-IP> --reason
-Purpose:
---reason displays the reason Nmap used to determine the host state (e.g., Nmap may report that the host is up because it received an ICMP Echo Reply).
+```
 
-Command:
+**Purpose:**  
+`--reason` displays the reason Nmap used to determine the host state.
 
-bash
+### Display Packets
+
+```bash
 nmap -PE -sn <TARGET-IP> --reason --packet-trace
-Purpose:
---packet-trace displays packets sent and received during the scan. Useful for understanding what network packets Nmap is actually sending during host discovery.
+```
 
-Command:
+**Purpose:**  
+`--packet-trace` displays packets sent and received during the scan.
 
-bash
+### Disable ARP Ping
+
+```bash
 nmap -PE -sn <TARGET-IP> --reason --packet-trace --disable-arp-ping
-Purpose:
---disable-arp-ping prevents Nmap from using ARP ping during host discovery. Useful when studying ICMP-based host discovery separately from ARP discovery.
+```
 
-3. Host Discovery Using Non-Echo ICMP
+**Purpose:**  
+`--disable-arp-ping` prevents Nmap from using ARP ping during host discovery.
+
+---
+
+## 3. Host Discovery Using Non-Echo ICMP
+
 ICMP host discovery does not have to use only Echo Requests. Nmap supports other ICMP message types.
 
-Command:
+### ICMP Timestamp
 
-bash
+```bash
 nmap -PP -sn <TARGET-IP>
-Purpose:
--PP uses an ICMP Timestamp Request to determine whether a host is reachable.
+```
 
-Command:
+**Purpose:**  
+`-PP` uses an ICMP Timestamp Request to determine whether a host is reachable.
 
-bash
+### ICMP Address Mask
+
+```bash
 nmap -PM -sn <TARGET-IP>
-Purpose:
--PM uses an ICMP Address Mask Request, another ICMP-based host discovery technique.
+```
 
-4. Host Discovery Using TCP Sweep
+**Purpose:**  
+`-PM` uses an ICMP Address Mask Request as another ICMP-based host discovery technique.
+
+---
+
+## 4. Host Discovery Using TCP Sweep
+
 TCP-based host discovery sends TCP probes to determine whether hosts are reachable.
 
-Command:
+### TCP SYN Probe
 
-bash
+```bash
 nmap -sn -PS80 <TARGET-IP>
-Purpose:
--PS80 sends a TCP SYN probe to port 80 (HTTP). Used to determine whether a host is reachable using a TCP SYN probe.
+```
 
-Command:
+**Purpose:**  
+`-PS80` sends a TCP SYN probe to port 80.
 
-bash
+### TCP ACK Probe
+
+```bash
 nmap -sn -PA80 <TARGET-IP>
-Purpose:
--PA80 sends a TCP ACK probe to port 80. Uses TCP ACK packets as a host discovery method.
+```
 
-5. Host Discovery Using UDP Sweep
+**Purpose:**  
+`-PA80` sends a TCP ACK probe to port 80.
+
+---
+
+## 5. Host Discovery Using UDP Sweep
+
 UDP discovery uses UDP probes to determine whether hosts are reachable.
 
-Command:
-
-bash
+```bash
 nmap -sn -PU53 <TARGET-IP>
-Purpose:
--PU sends a UDP probe to the specified port (port 53 - DNS). A response can indicate that the host is reachable. An ICMP Port Unreachable response can also provide evidence that the host exists.
+```
 
-TCP Port Scanning
-Port scanning is used to identify the state of TCP ports on a target. Common states include: Open, Closed, and Filtered.
+**Purpose:**  
+`-PU` sends a UDP probe to the specified port. Here, port 53 is used.
 
-6. TCP Connect Scan
-Command:
+A response can indicate that the host is reachable. An ICMP Port Unreachable response can also provide evidence that the host exists.
 
-bash
+---
+
+# TCP Port Scanning
+
+Port scanning is used to identify the state of TCP ports on a target.
+
+Common states include:
+
+- **Open**
+- **Closed**
+- **Filtered**
+
+## 6. TCP Connect Scan
+
+**Command:**
+
+```bash
 nmap -sT <TARGET-IP>
-Purpose:
+```
+
+**Purpose:**  
 Performs a TCP Connect scan by establishing a complete TCP connection with the target port.
 
-TCP Three-Way Handshake:
+### TCP Three-Way Handshake
 
-text
+```text
 SYN
-   ↓
+ ↓
 SYN/ACK
-   ↓
+ ↓
 ACK
-If the connection can be established, the port is considered open. TCP Connect scanning completes the TCP connection and is generally more detectable than a SYN scan.
+```
 
-7. TCP SYN Scan (Stealth Scan)
-Command:
+If the connection can be established, the port is considered open.
 
-bash
+TCP Connect scanning completes the TCP connection and is generally more detectable than a SYN scan.
+
+---
+
+## 7. TCP SYN Scan (Stealth Scan)
+
+**Command:**
+
+```bash
 sudo nmap -sS <TARGET-IP>
-Purpose:
+```
+
+**Purpose:**  
 Performs a TCP SYN scan to identify open TCP ports without completing the normal TCP three-way handshake.
 
-For an Open Port:
+### Open Port
 
-text
+```text
 Kali                    Target
   │
   │──── SYN ──────────►
   │◄── SYN/ACK ────────
   │──── RST ──────────►
-A SYN/ACK response indicates that the port is open. -sS is commonly called a TCP SYN scan, half-open scan, or TCP stealth scan.
+```
 
-Note: Stealth does not mean completely invisible. Modern security monitoring and IDS/IPS systems can detect SYN scanning activity.
+A SYN/ACK response indicates that the port is open.
 
-8. FTP Bounce Scan
+`-sS` is commonly called a TCP SYN scan, half-open scan, or TCP stealth scan.
+
+> **Note:** Stealth does not mean completely invisible. Modern security monitoring and IDS/IPS systems can detect SYN scanning activity.
+
+---
+
+## 8. FTP Bounce Scan
+
 FTP Bounce scanning uses an FTP server as an intermediary to perform a scan toward another target.
 
-Command:
+**Command:**
 
-bash
+```bash
 nmap -b <FTP-SERVER> <TARGET-IP>
-Example:
+```
 
-bash
+**Example:**
+
+```bash
 nmap -b 192.168.56.101 192.168.56.102
-Concept:
+```
 
-text
+### Concept
+
+```text
 Kali
   │
   │ FTP
@@ -174,58 +254,81 @@ FTP Server
   │ Scan/probe
   ▼
 Target
-The FTP server acts as an intermediary. FTP bounce scanning is mainly important today as a security concept because modern FTP servers generally restrict this behavior.
+```
 
-Command:
+The FTP server acts as an intermediary.
 
-bash
+FTP bounce scanning is mainly important today as a security concept because modern FTP servers generally restrict this behavior.
+
+### Verbose Mode
+
+```bash
 nmap -v -b <FTP-SERVER> <TARGET-IP>
-Purpose:
--v enables verbose mode, which displays additional information while Nmap performs the scan.
+```
 
-Command:
+**Purpose:**  
+`-v` enables verbose mode and displays additional information while Nmap performs the scan.
 
-bash
+### FTP Authentication
+
+```bash
 nmap -v -b <USERNAME>:<PASSWORD>@<FTP-SERVER> <TARGET-IP>
-Purpose:
-Allows authentication to the FTP server used for the bounce. The @ separates credentials from the FTP server. The FTP server is used as an intermediary instead of Kali directly connecting to the target.
+```
 
-Important Nmap Options Learned
-Option	Purpose
--PE	ICMP Echo Request discovery
--PP	ICMP Timestamp discovery
--PM	ICMP Address Mask discovery
--PS	TCP SYN host discovery
--PA	TCP ACK host discovery
--PU	UDP host discovery
--sn	Host discovery without port scanning
---reason	Shows why Nmap determined the host state
---packet-trace	Shows packets sent and received
---disable-arp-ping	Disables ARP ping
--sT	TCP Connect Scan
--sS	TCP SYN/Stealth Scan
--b	FTP Bounce Scan
--v	Verbose output
-Host Discovery vs Port Scanning
-One important concept is the difference between host discovery and port scanning.
+**Purpose:**  
+Allows authentication to the FTP server used for the bounce.
 
-Host Discovery:
-Question: Is the machine alive/reachable?
+The `@` separates credentials from the FTP server.
 
-bash
+---
+
+# Important Nmap Options Learned
+
+| Option | Purpose |
+|---|---|
+| `-PE` | ICMP Echo Request discovery |
+| `-PP` | ICMP Timestamp discovery |
+| `-PM` | ICMP Address Mask discovery |
+| `-PS` | TCP SYN host discovery |
+| `-PA` | TCP ACK host discovery |
+| `-PU` | UDP host discovery |
+| `-sn` | Host discovery without port scanning |
+| `--reason` | Shows why Nmap determined the host state |
+| `--packet-trace` | Shows packets sent and received |
+| `--disable-arp-ping` | Disables ARP ping |
+| `-sT` | TCP Connect Scan |
+| `-sS` | TCP SYN/Stealth Scan |
+| `-b` | FTP Bounce Scan |
+| `-v` | Verbose output |
+
+---
+
+# Host Discovery vs Port Scanning
+
+### Host Discovery
+
+**Question:** Is the machine alive/reachable?
+
+```bash
 nmap -sn -PE <TARGET-IP>
 nmap -sn -PS80 <TARGET-IP>
 nmap -sn -PU53 <TARGET-IP>
-Port Scanning:
-Question: Which ports are open on the machine?
+```
 
-bash
+### Port Scanning
+
+**Question:** Which ports are open on the machine?
+
+```bash
 nmap -sT <TARGET-IP>
 sudo nmap -sS <TARGET-IP>
-Lab Environment
-My practical environment:
+```
 
-text
+---
+
+# Lab Environment
+
+```text
 ┌──────────────────────┐
 │      Kali Linux      │
 │   Attacker / Tester  │
@@ -237,32 +340,23 @@ text
 │    Metasploitable 2  │
 │   Vulnerable Target  │
 └──────────────────────┘
-Key Takeaways:
-ifconfig helps identify network interface and IP information.
+```
 
-Host discovery determines whether a system is reachable.
+---
 
--PE uses ICMP Echo Request.
+# Key Takeaways
 
--PP uses ICMP Timestamp Request.
-
--PM uses ICMP Address Mask Request.
-
--PS uses TCP SYN probes for host discovery.
-
--PA uses TCP ACK probes for host discovery.
-
--PU uses UDP probes for host discovery.
-
--sT performs a TCP Connect scan.
-
--sS performs a TCP SYN/Stealth scan.
-
--b performs an FTP Bounce scan.
-
---reason explains Nmap's host-state decision.
-
---packet-trace helps understand the actual packets involved.
-
-Host discovery and port scanning are different stages of network reconnaissance.
-
+- `ifconfig` helps identify network interface and IP information.
+- Host discovery determines whether a system is reachable.
+- `-PE` uses ICMP Echo Request.
+- `-PP` uses ICMP Timestamp Request.
+- `-PM` uses ICMP Address Mask Request.
+- `-PS` uses TCP SYN probes for host discovery.
+- `-PA` uses TCP ACK probes for host discovery.
+- `-PU` uses UDP probes for host discovery.
+- `-sT` performs a TCP Connect scan.
+- `-sS` performs a TCP SYN/Stealth scan.
+- `-b` performs an FTP Bounce scan.
+- `--reason` explains Nmap's host-state decision.
+- `--packet-trace` helps understand the actual packets involved.
+- Host discovery and port scanning are different stages of network reconnaissance.
